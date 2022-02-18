@@ -1,0 +1,59 @@
+-- SQL for final table 'Datasource-Production'-----
+-- Resulted table has no col. with distinct values
+
+SELECT 
+b.handoffsk,
+b.SourceLanguageCode, 
+b.handoffstatename, 
+b.handoff,
+b.createddate,
+b.completeddate,
+h.HandoffID,
+h.projectno,
+t.wordcount,
+    
+-- switch b.classifition into new column "priority"
+  CASE WHEN b.Classification = 'H' then 0
+       WHEN b.Classification = 'M' then 1
+       when b.Classification = 'L' then 2 
+	   else 3
+  END as Priority
+  
+FROM Base b
+
+-- all from Base and all matching rows from Handoff & Tasks, HandoffSK has one row matching into multiple rows in Handoff.id and it has one row matching into multiple rows in Tasks.id. 
+LEFT JOIN Handoff h on b.HandoffSK = h.HandoffSK
+left JOIN Tasks t on h.HandoffID = t.handoffid
+where b.handoffstatename <> "Canceled"
+order by b.handoffsk;
+
+-----BONUS TASK 1-------
+SELECT 
+--just checks columns if the code works as inteded + it gives context
+(SELECT
+	COUNT(Handoffsk)
+	from base
+ 	where sourcelanguagecode = "EN-US") as "N.en-us",
+count (handoffsk) as "N.total",
+-- value in col. handhandoffsk is int (whole numbers) therefore multiplications needs to be done before divided!  
+(SELECT
+	COUNT(Handoffsk)
+    from base
+    where sourcelanguagecode = "EN-US") * 100 /
+count (handoffsk)  as "percentage"
+from base; 
+
+ --------- BONUS TASK 2----------
+ -- IF Sum iscurrent inside each distinct handoffsk = 0 then there is no-current value in handoff 
+SELECT 
+SUM(iscurrent) as sum, 
+-- check if groub by works as intended | COUNT( handoffsk) 
+handoffsk
+from Handoff
+GROUP by handoffsk
+HAVING sum = 0
+-- There is no handoffSK with only no-current value
+   
+
+
+
